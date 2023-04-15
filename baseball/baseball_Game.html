@@ -7,29 +7,54 @@
 
 <body>
     <form id="form">
+        <div><span id="order">1</span>번째 게임</div>
         <input type="text" id="input">
         <button>확인</button>
     </form>
     <div id="logs"></div>
     <script>
+
         const $input = document.querySelector('#input');
         const $form = document.querySelector('#form');
         const $logs = document.querySelector('#logs');
+        const $order = document.querySelector('#order');
+        const button = document.querySelector('button');
+        let divLog = null;
 
-        const numbers = [];
-        for (let n = 1; n <= 9; n += 1) {
-            numbers.push(n);
+        let GameRule = confirm('게임을 시작하시겠습니까?');
+        if (GameRule == true) {
+            alert('숫자 1~9 중에서 중복되지 않게 네 개를 고릅니다. ex) 1234 \n(0은 포함되지 않습니다.) \n총 10번의 기회가 주어지고 상대편이 고른 숫자 네 개를 맞히면 됩니다.')
+        } else {
+            document.body.innerHTML = "<h1>게임을 종료합니다.<h1> \n 게임을 시작하려면 새로고침(F5) 하세요.<h1>";
+
         }
 
-        const answer = [];
-        for (let n = 0; n <= 3; n += 1) {
-            const index = Math.floor(Math.random() * numbers.length);
-            answer.push(numbers[index]);
-            numbers.splice(index, 1);
-        }
-        console.log(answer);
 
-        const tries = [];
+        let answer = [];
+        let playTimes = 0;
+        function createGameAnswer() {
+            const numbers = Array(9).fill().map((v, i) => i + 1);
+
+            answer = [];
+            for (let n = 0; n <= 3; n += 1) {
+                const index = Math.floor(Math.random() * numbers.length);
+                answer.push(numbers[index]);
+                numbers.splice(index, 1);
+            }
+            playTimes += 1;
+            console.log(answer);
+            divLog = document.createElement('div');
+            divLog.setAttribute('id', `playTimes$${playTimes}`);
+            divLog.append(document.createElement('br'),
+                `--------------------------------------------------------`,
+                document.createElement('br'), `[${playTimes}번째] 게임`,
+                document.createElement('br'));
+            $logs.prepend(divLog);
+
+        }
+        createGameAnswer();
+
+        let tries = [];
         function checkInput(input) {
             if (input.length !== 4) {
                 return alert('4자리 숫자를 입력해 주세요.');
@@ -46,6 +71,7 @@
             return true;
         }
 
+
         let out = 0;
         $form.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -54,12 +80,9 @@
             const valid = checkInput(value);
             if (!valid) return;
             if (answer.join('') === value) {
-                $logs.textContent = '홈런!';
-                return;
-            }
-
-            if (tries.length >= 9) {
-                gameDefeat();
+                alert('홈런!');
+                divLog.append(`[${playTimes}번째] 게임 <${tries.length + 1} 회차> ${value} 홈런!`, document.createElement('br'));
+                reGame();
                 return;
             }
 
@@ -76,25 +99,55 @@
                 }
             }
 
-            if (strike == 0 && ball == 0) {
-                out++;
-                $logs.append(`${value}: 아웃`, document.createElement('br'));
-            } else {
-                $logs.append(`${value}: ${strike} 스트라이크 ${ball} 볼`, document.createElement('br'));
-            }
-
-            if (out == 3) {
-                gameDefeat();
+            if (value.includes('0')) {
+                alert('0은 입력할 수 없습니다.');
                 return;
             }
 
+            if (strike == 0 && ball == 0) {
+                out++;
+                divLog.append(`<${tries.length + 1} 회차> ${value}: 아웃`, document.createElement('br'));
+
+            } else {
+                divLog.append(`<${tries.length + 1} 회차> ${value}: ${strike} 스트라이크 ${ball} 볼`, document.createElement('br'));
+
+            }
             tries.push(value);
+
+            if (tries.length >= 9 || out == 3) {
+                gameDefeat();
+                reGame();
+                return;
+            }
         });
 
         function gameDefeat() {
+            alert('패배했습니다.');
             const message = document.createTextNode(`패배! 정답은 ${answer.join('')}`);
-            $logs.appendChild(message);
+            divLog.appendChild(message);
         }
+
+        function reGame() {
+            let reGame = confirm('새 게임을 하시겠습니까?');
+            if (reGame == true) {
+                alert('새 게임이 시작됩니다.');
+                tries = [];
+                out = 0;
+                const order = Number($order.textContent);
+                $order.textContent = order + 1;
+                createGameAnswer();
+            } else {
+                alert('게임을 종료합니다.');
+                $input.setAttribute('disabled', true);
+                button.setAttribute('disabled', true);
+
+            }
+        }
+
+
+
+
+
 
     </script>
 </body>
